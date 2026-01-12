@@ -1,14 +1,43 @@
 {
   "version": 3,
-  "configurePresets": [
+  "configurePresets": 
+  [
     {
-      "name": "mingw-debug",
+      "name": "windows-debug",
       "displayName": "MinGW Debug",
       "description": "使用 MinGW 的 Debug 构建",
       "generator": "MinGW Makefiles",
       "binaryDir": "build",
-      "cacheVariables": {
+      "cacheVariables": 
+      {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": 
+      {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "description": "Linux Debug构建",
+      "generator": "Unix Makefiles",
+      "binaryDir": "build",
+      "cacheVariables": 
+      {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_CXX_FLAGS": "-g -Wall -Wextra -pthread"
+      },
+      "condition": 
+      {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
       }
     }
   ]
