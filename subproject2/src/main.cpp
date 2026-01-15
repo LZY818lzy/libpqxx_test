@@ -83,35 +83,6 @@ size_t get_file_size(const std::string& filename) {
     return rc == 0 ? stat_buf.st_size : 0;
 }
 
-// 测试文件滚动
-void test_log_rotation() {
-    std::cout << "\n=== 测试文件滚动 ===" << std::endl;
-    
-    // 记录一些大日志，触发滚动
-    for (int i = 0; i < 500; ++i) {
-        g_logger->info("滚动测试 {} - 这是一条比较长的日志消息，用于测试文件滚动功能，确保文件能够正常滚动。", i);
-        
-        // 每写入50条日志，检查一次文件状态
-        if ((i + 1) % 50 == 0) {
-            g_logger->flush();
-            
-            // 检查主日志文件大小
-            size_t size = get_file_size("logs/log.txt");
-            std::cout << "已写入 " << (i + 1) << " 条日志，主文件大小: " 
-                      << size << " 字节 (" << size / 1024.0 << " KB)" << std::endl;
-            
-            // 检查备份文件
-            for (int j = 1; j <= 3; ++j) {
-                std::string backup_file = "logs/log.txt." + std::to_string(j);
-                size = get_file_size(backup_file);
-                if (size > 0) {
-                    std::cout << "备份文件 " << backup_file << " 大小: " 
-                              << size << " 字节" << std::endl;
-                }
-            }
-        }
-    }
-}
 
 // 初始化日志系统函数
 bool initLogging(CConfig &config)
@@ -227,11 +198,8 @@ void becomeDaemon()
 
     setsid(); // 3. 创建新的会话，使进程脱离终端控制，在新会话中成为领导进程
     std::cout << "新会话创建成功，进程已脱离终端控制。" << std::endl;
-    // // 4. 关闭标准输入输出（可选，这里保持打开以便观察）
-    // close(STDIN_FILENO);
-    // close(STDOUT_FILENO);
-    // close(STDERR_FILENO);
-        // 重定向标准输入输出
+
+    // 重定向标准输入输出
     int null_fd = open("/dev/null", O_RDWR);
     if (null_fd != -1)
     {
@@ -242,8 +210,7 @@ void becomeDaemon()
     }
     std::cout << "标准输入输出已关闭。" << std::endl; // 不会显示
 
-    // 5. 保持在原工作目录，而不是切换到/tmp
-    // 这样可以确保相对路径的日志文件能够正确访问
+    // 5. 保持在原工作目录，而不是切换到/tmp，这样可以确保相对路径的日志文件能够正确访问
     // chdir("/tmp");  // 注释掉：避免影响日志文件路径
     chdir(original_cwd.c_str());  // 切换回原工作目录
 
@@ -310,9 +277,6 @@ int main()
     std::cout << "  - 线程数: " << threadCount << std::endl;
     std::cout << "  - 运行模式: " << (daemonMode ? "守护进程" : "前台进程") << std::endl;
 
-    // 测试文件滚动
-    // test_log_rotation();
-
     // 注册信号处理器
     signal(SIGINT, signalHandler);   // 处理 Ctrl+C
     signal(SIGTERM, signalHandler);  // 处理 kill 命令
@@ -357,24 +321,6 @@ int main()
     g_logger->info("========== 应用程序结束 ==========");
 
     std::cout << "\n所有线程执行完毕，程序即将退出。" << std::endl;
-
-    // std::this_thread::sleep_for(std::chrono::seconds(200)); // 给时间观察输出
-
-    // 如果守护进程模式，持续运行一段时间以便观察
-    // if (daemonMode)
-    // {
-    //     std::cout << "守护进程将持续运行（观察日志文件查看状态）..." << std::endl;
-    //     for (int i = 0; i < 20; ++i)
-    //     {
-    //         std::this_thread::sleep_for(std::chrono::seconds(10));
-    //         g_logger->info("守护进程运行中... {}0秒已过", i + 1);
-    //     }
-    // }
-    // else
-    // {
-    //     // 前台模式，短暂等待后退出
-    //     std::this_thread::sleep_for(std::chrono::seconds(3));
-    // }
 
     // 确保所有日志写入文件
     g_logger->flush();
