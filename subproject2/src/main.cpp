@@ -6,6 +6,7 @@
 #include <thread>   // C++11线程库，创建和管理线程
 #include <chrono>   // 时间库，处理时间间隔
 #include <unistd.h> // Unix标准头文件，提供fork、getpid等系统调用
+#include <signal.h> // 信号处理库，用于处理SIGINT和SIGTERM
 
 #include <filesystem> // 文件系统库，用于创建目录
 #include "spdlog/spdlog.h"
@@ -20,6 +21,29 @@ bool bExit = false;
 
 // 全局日志记录器
 std::shared_ptr<spdlog::logger> g_logger;
+
+// 信号处理函数
+void signalHandler(int signum)
+{
+    if (signum == SIGINT)
+    {
+        if (g_logger)
+        {
+            g_logger->warn("收到 SIGINT 信号 (Ctrl+C)，准备退出...");
+        }
+        std::cout << "\n收到 SIGINT 信号，程序即将退出..." << std::endl;
+    }
+    else if (signum == SIGTERM)
+    {
+        if (g_logger)
+        {
+            g_logger->warn("收到 SIGTERM 信号 (kill命令)，准备退出...");
+        }
+        std::cout << "\n收到 SIGTERM 信号，程序即将退出..." << std::endl;
+    }
+    
+    bExit = true;
+}
 
 // 辅助函数：日志级别字符串转换为spdlog级别
 spdlog::level::level_enum stringToLevel(const std::string &level_str)
@@ -285,6 +309,11 @@ int main()
 
     // 测试文件滚动
     // test_log_rotation();
+
+    // 注册信号处理器
+    signal(SIGINT, signalHandler);   // 处理 Ctrl+C
+    signal(SIGTERM, signalHandler);  // 处理 kill 命令
+    g_logger->info("信号处理器已注册 (SIGINT, SIGTERM)");
 
     // 在日志中记录关键系统事件
     g_logger->info("========== 应用程序启动 ==========");
