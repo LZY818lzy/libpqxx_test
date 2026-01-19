@@ -299,7 +299,30 @@ void dbThreadTask(const std::string &conn_str, int id)
 
         }
 
-        // 执行更新操作
+        // 执行添加操作
+        {
+            const std::string insert_sql = 
+                "INSERT INTO users (username, full_name, email, phone) "
+                "VALUES ($1, $2, $3, $4) RETURNING id;";
+            pqxx::work txn(conn);
+
+            std::string username = "lzy";
+            std::string full_name = "刘昭媛";
+            std::string email = "liuzhaoyuan@baowu.ren"; 
+            std::string phone = "15215607035";
+            pqxx::result insert_result = txn.exec_params(
+                insert_sql, username, full_name, email, phone);
+            txn.commit();
+            if (!insert_result.empty())
+            {
+                int new_id = insert_result[0]["id"].as<int>();
+                g_logger->info("成功插入新用户，ID: {}", new_id);
+            }
+            else
+            {
+                g_logger->warn("插入新用户失败，未返回ID");
+            }
+        }
         
 
     }
