@@ -266,7 +266,7 @@ void dbThreadTask(const std::string &conn_str, int id)
             int user_id = 1; 
             const std::string sql = "SELECT * FROM users WHERE id = $1;";
             pqxx::nontransaction txn(conn);
-            pqxx::result result = txn.exec_params(sql, user_id);
+            pqxx::result result = txn.exec(sql, pqxx::params{user_id});
 
             if (!result.empty())
             {
@@ -310,8 +310,8 @@ void dbThreadTask(const std::string &conn_str, int id)
         //     std::string full_name = "刘昭媛";
         //     std::string email = "liuzhaoyuan@baowu.ren"; 
         //     std::string phone = "15215607035";
-        //     pqxx::result insert_result = txn.exec_params(
-        //         insert_sql, username, full_name, email, phone);
+        //     pqxx::result insert_result = txn.exec(
+        //         insert_sql, pqxx::params{username, full_name, email, phone});
         //     txn.commit();
         //     if (!insert_result.empty())
         //     {
@@ -335,8 +335,8 @@ void dbThreadTask(const std::string &conn_str, int id)
         //     std::string full_name = "张三";
         //     std::string email = "zhangsan@example.com"; 
         //     std::string phone = "13800138000";
-        //     pqxx::result insert_result = txn.exec_params(
-        //         insert_sql, username, full_name, email, phone);
+        //     pqxx::result insert_result = txn.exec(
+        //         insert_sql, pqxx::params{username, full_name, email, phone});
         //     txn.commit();
         //     if (!insert_result.empty())
         //     {
@@ -356,8 +356,8 @@ void dbThreadTask(const std::string &conn_str, int id)
             pqxx::work txn(conn);
             int user_id = 6; // 假设要更新ID为6的用户
             std::string new_username = "zs";
-            pqxx::result insert_result = txn.exec_params(
-                update_sql, new_username, user_id);
+            pqxx::result insert_result = txn.exec(
+                update_sql, pqxx::params{new_username, user_id});
             txn.commit();
             g_logger->info("成功更新用户 ID: {} 的用户名为 {}", user_id, new_username);
         }

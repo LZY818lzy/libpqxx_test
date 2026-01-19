@@ -7,8 +7,8 @@
 // int main(int argc, char* argv[]) {
 //    try {
 //     // 连接到数据库
-//       connection C("dbname = testDB1 user = lzy password = lzy \
-//       hostaddr = 127.0.0.1 port = 5432");
+//       connection C("dbname = testDB1 user = lzy password = lzy "
+//       "hostaddr = 127.0.0.1 port = 5432");
 //       if (C.is_open()) 
 //       {
 //          cout << "Opened database successfully: " << C.dbname() << endl;
@@ -21,20 +21,20 @@
 
 //     // 创建 表
 //         // // 创建表
-//         // std::string sql = "CREATE TABLE COMPANY_1("  \
-//         // "ID INT PRIMARY KEY     NOT NULL," \
-//         // "NAME           TEXT    NOT NULL," \
-//         // "AGE            INT     NOT NULL," \
-//         // "ADDRESS        CHAR(50)," \
+//         // std::string sql = "CREATE TABLE COMPANY_1("  
+//         // "ID INT PRIMARY KEY     NOT NULL,"
+//         // "NAME           TEXT    NOT NULL,"
+//         // "AGE            INT     NOT NULL,"
+//         // "ADDRESS        CHAR(50),"
 //         // "SALARY         REAL );";
 //         // // 插入数据
-//         // std::string sql = "INSERT INTO COMPANY_1     (ID,NAME,AGE,ADDRESS,SALARY) "  \
-//         //     "VALUES (1, 'Paul', 32, 'California', 20000.00 ); " \
-//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY) "  \
-//         //     "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     \
-//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY)" \
-//         //     "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" \
-//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY)" \
+//         // std::string sql = "INSERT INTO COMPANY_1     (ID,NAME,AGE,ADDRESS,SALARY) "  
+//         //     "VALUES (1, 'Paul', 32, 'California', 20000.00 ); " 
+//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY) "  
+//         //     "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     
+//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY)" 
+//         //     "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" 
+//         //     "INSERT INTO COMPANY_1 (ID,NAME,AGE,ADDRESS,SALARY)" 
 //         //     "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
 
 //         // // 获取和显示数据
@@ -109,8 +109,8 @@
 //     try
 //     {
 //         // 连接到数据库
-//         pqxx::connection conn("dbname = testDB1 user = lzy password = lzy \
-//                     hostaddr = 127.0.0.1 port = 5432");
+//         pqxx::connection conn("dbname = testDB1 user = lzy password = lzy "
+//                     "hostaddr = 127.0.0.1 port = 5432");
 
 //         // 创建一个事务对象
 //         pqxx::work W(conn);

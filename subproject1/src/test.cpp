@@ -10,6 +10,9 @@ using namespace pqxx;
 
 int main(int argc, char *argv[])
 {
+    // 参数在本测试程序中未使用 - 明确忽略以避免编译器警告
+    (void)argc; (void)argv;
+
     // 设置控制台编码为UTF-8
     #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
@@ -18,8 +21,8 @@ int main(int argc, char *argv[])
     try
     {
         // 连接到数据库
-        connection conn("dbname = testDB1 user = lzy password = lzy \
-      hostaddr = 127.0.0.1 port = 5432");
+        connection conn("dbname = testDB1 user = lzy password = lzy "
+      "hostaddr = 127.0.0.1 port = 5432");
         if (conn.is_open())
         {
             cout << "Opened database successfully: " << conn.dbname() << endl;
