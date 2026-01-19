@@ -299,31 +299,68 @@ void dbThreadTask(const std::string &conn_str, int id)
 
         }
 
-        // 执行添加操作
-        {
-            const std::string insert_sql = 
-                "INSERT INTO users (username, full_name, email, phone) "
-                "VALUES ($1, $2, $3, $4) RETURNING id;";
-            pqxx::work txn(conn);
+        // // 执行添加操作
+        // {
+        //     const std::string insert_sql = 
+        //         "INSERT INTO users (username, full_name, email, phone) "
+        //         "VALUES ($1, $2, $3, $4) RETURNING id;";
+        //     pqxx::work txn(conn);
 
-            std::string username = "lzy";
-            std::string full_name = "刘昭媛";
-            std::string email = "liuzhaoyuan@baowu.ren"; 
-            std::string phone = "15215607035";
-            pqxx::result insert_result = txn.exec_params(
-                insert_sql, username, full_name, email, phone);
-            txn.commit();
-            if (!insert_result.empty())
-            {
-                int new_id = insert_result[0]["id"].as<int>();
-                g_logger->info("成功插入新用户，ID: {}", new_id);
-            }
-            else
-            {
-                g_logger->warn("插入新用户失败，未返回ID");
-            }
-        }
+        //     std::string username = "lzy";
+        //     std::string full_name = "刘昭媛";
+        //     std::string email = "liuzhaoyuan@baowu.ren"; 
+        //     std::string phone = "15215607035";
+        //     pqxx::result insert_result = txn.exec_params(
+        //         insert_sql, username, full_name, email, phone);
+        //     txn.commit();
+        //     if (!insert_result.empty())
+        //     {
+        //         int new_id = insert_result[0]["id"].as<int>();
+        //         g_logger->info("成功插入新用户，ID: {}", new_id);
+        //     }
+        //     else
+        //     {
+        //         g_logger->warn("插入新用户失败，未返回ID");
+        //     }
+        // }
         
+        // // 执行添加操作
+        // {
+        //     const std::string insert_sql = 
+        //         "INSERT INTO users (username, full_name, email, phone) "
+        //         "VALUES ($1, $2, $3, $4) RETURNING id;";
+        //     pqxx::work txn(conn);
+
+        //     std::string username = "zhangsan";
+        //     std::string full_name = "张三";
+        //     std::string email = "zhangsan@example.com"; 
+        //     std::string phone = "13800138000";
+        //     pqxx::result insert_result = txn.exec_params(
+        //         insert_sql, username, full_name, email, phone);
+        //     txn.commit();
+        //     if (!insert_result.empty())
+        //     {
+        //         int new_id = insert_result[0]["id"].as<int>();
+        //         g_logger->info("成功插入新用户，ID: {}", new_id);
+        //     }
+        //     else
+        //     {
+        //         g_logger->warn("插入新用户失败，未返回ID");
+        //     }
+        // }
+
+        // 更新数据操作
+        {
+            const std::string update_sql = 
+                "UPDATE users SET username = $1 WHERE id = $2;";
+            pqxx::work txn(conn);
+            int user_id = 6; // 假设要更新ID为6的用户
+            std::string new_username = "zs";
+            pqxx::result insert_result = txn.exec_params(
+                update_sql, new_username, user_id);
+            txn.commit();
+            g_logger->info("成功更新用户 ID: {} 的用户名为 {}", user_id, new_username);
+        }
 
     }
     catch (const std::exception &e)
