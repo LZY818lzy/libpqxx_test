@@ -228,13 +228,13 @@ void threadTask(int id)
     g_logger->info("线程 {} 开始执行 (PID: {}, TID: {})",
                    id, getpid(), thread_id_str);
 
-    int loop_count = 0;
-    while(!bExit)
-    {
-        g_logger->info("线程 {} 正在运行执行第 {} 次任务 (PID: {}, TID: {})",
-                   id, ++loop_count, getpid(), thread_id_str);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    // int loop_count = 0;
+    // while(!bExit)
+    // {
+    //     g_logger->info("线程 {} 正在运行执行第 {} 次任务 (PID: {}, TID: {})",
+    //                id, ++loop_count, getpid(), thread_id_str);
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // }
 
     g_logger->info("线程 {} 正在运行执行完毕", id);    
 
@@ -243,10 +243,10 @@ void threadTask(int id)
 }
 
 // 数据库线程任务：在独立连接中执行简单的读写操作
-void dbThreadTask(const std::string &conn_str, int id)
+void dbThreadTask(const std::string &conn_str)
 {
     std::string thread_id_str = get_thread_id_str();
-    g_logger->info("数据库线程 {} 启动 (TID: {})", id, thread_id_str);
+    g_logger->info("数据库线程 {} 启动", thread_id_str);
 
     try
     {
@@ -349,18 +349,18 @@ void dbThreadTask(const std::string &conn_str, int id)
         //     }
         // }
 
-        // 更新数据操作
-        {
-            const std::string update_sql = 
-                "UPDATE users SET username = $1 WHERE id = $2;";
-            pqxx::work txn(conn);
-            int user_id = 6; // 假设要更新ID为6的用户
-            std::string new_username = "zs";
-            pqxx::result insert_result = txn.exec(
-                update_sql, pqxx::params{new_username, user_id});
-            txn.commit();
-            g_logger->info("成功更新用户 ID: {} 的用户名为 {}", user_id, new_username);
-        }
+        // // 更新数据操作
+        // {
+        //     const std::string update_sql = 
+        //         "UPDATE users SET username = $1 WHERE id = $2;";
+        //     pqxx::work txn(conn);
+        //     int user_id = 6; // 假设要更新ID为6的用户
+        //     std::string new_username = "zs";
+        //     pqxx::result insert_result = txn.exec(
+        //         update_sql, pqxx::params{new_username, user_id});
+        //     txn.commit();
+        //     g_logger->info("成功更新用户 ID: {} 的用户名为 {}", user_id, new_username);
+        // }
 
     }
     catch (const std::exception &e)
@@ -368,7 +368,7 @@ void dbThreadTask(const std::string &conn_str, int id)
         g_logger->error("数据库线程异常: {}", e.what());
     }
 
-    g_logger->info("数据库线程 {} 结束", id);
+    g_logger->info("数据库线程 {} 结束");
 }
 
 int main()
@@ -413,13 +413,6 @@ int main()
     g_logger->info("线程数: {}", threadCount);
     g_logger->info("运行模式: {}", daemonMode ? "守护进程" : "前台进程");
 
-    // 读取数据库连接信息
-    std::string dbname = config.GetStringDefault("dbname", "");
-    std::string dbuser = config.GetStringDefault("user", "");
-    std::string dbpass = config.GetStringDefault("password", "");
-    std::string hostaddr = config.GetStringDefault("hostaddr", "127.0.0.1");
-    int dbport = config.GetIntDefault("port", 5432);
-
     // 判断是否转为守护进程
     if (daemonMode)
     {
@@ -427,56 +420,57 @@ int main()
         becomeDaemon();
     }
 
-    // 创建并运行单个线程
-    std::cout << "开始创建单个线程..." << std::endl;
-    g_logger->info("开始创建单个线程");
+    // 创建并运行常规工作线程 + 可选数据库线程（并行启动）
+    // 先读取数据库连接信息以便后续使用（避免在使用前引用未声明的变量）
+    std::string dbname = config.GetStringDefault("dbname", "");
+    std::string dbuser = config.GetStringDefault("user", "");
+    std::string dbpass = config.GetStringDefault("password", "");
+    std::string hostaddr = config.GetStringDefault("hostaddr", "127.0.0.1");
+    int dbport = config.GetIntDefault("port", 5432);
 
-    // 直接创建单个线程
-    if (!dbname.empty())
+    // 三元运算符dbname.empty() ? 0 : 1 如果为空则显示0，否则显示1
+    std::cout << "开始创建线程（常规 " << threadCount << " + 数据库 " << (dbname.empty() ? 0 : 1) << "）..." << std::endl;
+    g_logger->info("开始创建线程（常规: {}, 数据库: {}）", threadCount, dbname.empty() ? 0 : 1);
+
+    std::vector<std::thread> threads; // 创建线程容器（主线程创建并在末尾 join）
+    threads.reserve(threadCount + (dbname.empty() ? 0 : 1)); // 预留空间:常规线程 + 数据库线程
+    // 创建常规工作线程，ID = 0 .. threadCount-1
+    for (int i = 0; i < threadCount; ++i)
+    {
+        //emplace_back() 方法在容器末尾直接构造线程对象，无需先创建再复制
+        
+        threads.emplace_back(threadTask, i);
+    }
+    // 数据库连接信息已在上方读取（避免重复声明）
+    // 如果有数据库配置，则创建一个额外的数据库线程，使用固定 ID (100)
+    
+    if (!dbname.empty() && !dbuser.empty() && !dbpass.empty() && !hostaddr.empty() && dbport > 0)
     {
         // 构建连接字符串：数据库连接信息
         std::stringstream conn_ss;
-        conn_ss << "dbname=" << dbname
+        conn_ss << " dbname=" << dbname
                 << " user=" << dbuser
                 << " password='" << dbpass << "'"
                 << " hostaddr=" << hostaddr
                 << " port=" << dbport;
 
         std::string db_conn_str = conn_ss.str();
-
         g_logger->info("将使用数据库连接 - dbname: {}, hostaddr: {}, port: {}", dbname, hostaddr, dbport);
 
-        // 创建单个数据库线程并直接 join，id 为 0
-        std::thread db_thread(dbThreadTask, db_conn_str, 0);
-        if (db_thread.joinable())
-            db_thread.join();
+        // 数据库线程使用固定 ID（例如 100）
+        threads.emplace_back(dbThreadTask, db_conn_str);
     }
     else
     {
         g_logger->warn("数据库连接信息不完整，跳过数据库线程创建");
     }
 
-    // // 步骤3：创建并运行线程
-    // std::cout << "开始创建 " << threadCount << " 个线程..." << std::endl;
-
-    // std::vector<std::thread> threads; // 创建线程容器
-    // threads.reserve(threadCount + 1);     // 预分配空间（包括一个数据库线程）
-
-    // // 循环创建指定数量的线程
-    // for (int i = 0; i < threadCount; ++i)
-    // {
-    //     // std::thread(threadTask, i) 创建新线程
-    //     // threadTask: 线程要执行的函数
-    //     // i: 传递给threadTask的参数
-    //     // push_back: 将线程对象添加到vector中
-    //     threads.push_back(std::thread(threadTask, i));
-    // }
-
-    // // 步骤4：等待所有线程完成
-    // for (auto &thread : threads)
-    // {
-    //     thread.join();
-    // }
+    // 等待所有线程完成（在主线程中 join）
+    for (auto &t : threads)
+    {
+        if (t.joinable())
+            t.join();
+    }
 
     // 记录和显示最终状态
     g_logger->info("所有线程执行完毕");
