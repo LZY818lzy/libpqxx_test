@@ -421,28 +421,21 @@ int main()
     }
 
     // 创建并运行常规工作线程 + 可选数据库线程（并行启动）
-    // 先读取数据库连接信息以便后续使用（避免在使用前引用未声明的变量）
+    // 创建线程容器（主线程创建并在末尾 join）
+    std::vector<std::thread> threads; 
+
+    // 创建常规工作线程，ID = 0 .. threadCount-1
+    for (int i = 0; i < threadCount; ++i)
+    {
+        //emplace_back() 方法在容器末尾直接构造线程对象，无需先创建再复制
+        threads.emplace_back(threadTask, i);
+    }
+    // 数据库连接信息读取
     std::string dbname = config.GetStringDefault("dbname", "");
     std::string dbuser = config.GetStringDefault("user", "");
     std::string dbpass = config.GetStringDefault("password", "");
     std::string hostaddr = config.GetStringDefault("hostaddr", "127.0.0.1");
     int dbport = config.GetIntDefault("port", 5432);
-
-    // 三元运算符dbname.empty() ? 0 : 1 如果为空则显示0，否则显示1
-    std::cout << "开始创建线程（常规 " << threadCount << " + 数据库 " << (dbname.empty() ? 0 : 1) << "）..." << std::endl;
-    g_logger->info("开始创建线程（常规: {}, 数据库: {}）", threadCount, dbname.empty() ? 0 : 1);
-
-    std::vector<std::thread> threads; // 创建线程容器（主线程创建并在末尾 join）
-    threads.reserve(threadCount + (dbname.empty() ? 0 : 1)); // 预留空间:常规线程 + 数据库线程
-    // 创建常规工作线程，ID = 0 .. threadCount-1
-    for (int i = 0; i < threadCount; ++i)
-    {
-        //emplace_back() 方法在容器末尾直接构造线程对象，无需先创建再复制
-        
-        threads.emplace_back(threadTask, i);
-    }
-    // 数据库连接信息已在上方读取（避免重复声明）
-    // 如果有数据库配置，则创建一个额外的数据库线程，使用固定 ID (100)
     
     if (!dbname.empty() && !dbuser.empty() && !dbpass.empty() && !hostaddr.empty() && dbport > 0)
     {
@@ -457,7 +450,7 @@ int main()
         std::string db_conn_str = conn_ss.str();
         g_logger->info("将使用数据库连接 - dbname: {}, hostaddr: {}, port: {}", dbname, hostaddr, dbport);
 
-        // 数据库线程使用固定 ID（例如 100）
+        // 数据库线程
         threads.emplace_back(dbThreadTask, db_conn_str);
     }
     else
